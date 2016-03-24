@@ -3,6 +3,7 @@
   "rules": {
     "semi": [1, "always"],
     "indent": [2, 2],
+    "arrow-parens": 0,
     "space-before-function-paren": [2, "never"],
     "padded-blocks": 0,
     "no-multi-spaces": 0

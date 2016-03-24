@@ -1,5 +1,6 @@
 const port = 5000;
 const express = require('express');
+const Q = require('q');
 const session = require('express-session');
 const path = require('path');
 const querystring = require('querystring');
@@ -18,6 +19,19 @@ const loginUrl = 'https://auth.getmondo.co.uk/?' + querystring.stringify({
 function balanceRequest(accessToken, accountId) {
   return {
     uri: 'https://api.getmondo.co.uk/balance',
+    headers: {
+      'Authorization': 'Bearer ' + accessToken
+    },
+    qs: {
+      'account_id': accountId
+    },
+    json: true
+  };
+}
+
+function listTransactionsRequest(accessToken, accountId) {
+  return {
+    uri: 'https://api.getmondo.co.uk/transactions',
     headers: {
       'Authorization': 'Bearer ' + accessToken
     },
@@ -92,12 +106,14 @@ app.get('/', (request, response) => {
   }
 
   rp(accountsRequest(accessToken))
-    .then((accountsResponse) => accountsResponse.accounts[0])
-    .then((account) => rp(balanceRequest(accessToken, account.id)))
-    .then((balanceResponse) => console.log(balanceResponse))
+    .then(accountsResponse => accountsResponse.accounts[0])
+    .then(account => Q.all([
+      rp(balanceRequest(accessToken, account.id)),
+      rp(listTransactionsRequest(accessToken, account.id))
+    ]))
+    .then(combined => response.render('index', { balance: combined[0] }))
     .error((error) => console.error(error));
 
-  response.render('index');
 });
 
 app.listen(port, () => {
