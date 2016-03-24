@@ -3,7 +3,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const querystring = require('querystring');
-const http = require('request');
+const rp = require('request-promise');
 const argv = require('minimist')(process.argv.slice(2));
 const FileStore = require('session-file-store')(session);
 const app = express();
@@ -14,6 +14,44 @@ const loginUrl = 'https://auth.getmondo.co.uk/?' + querystring.stringify({
   'redirect_uri': redirectUrl,
   'response_type': 'code'
 });
+
+function balanceRequest(accessToken, accountId) {
+  return {
+    uri: 'https://api.getmondo.co.uk/balance',
+    headers: {
+      'Authorization': 'Bearer ' + accessToken
+    },
+    qs: {
+      'account_id': accountId
+    },
+    json: true
+  };
+}
+
+function accountsRequest(accessToken) {
+  return {
+    uri: 'https://api.getmondo.co.uk/accounts',
+    headers: {
+      'Authorization': 'Bearer ' + accessToken
+    },
+    json: true
+  };
+}
+
+function authTokenRequest(code) {
+  return {
+    method: 'POST',
+    uri: 'https://api.getmondo.co.uk/oauth2/token',
+    form: {
+      'grant_type': 'authorization_code',
+      'client_id': argv.clientId,
+      'client_secret': argv.clientSecret,
+      'redirect_uri': redirectUrl,
+      'code': code
+    },
+    json: true
+  };
+}
 
 // configure the session
 app.use(session({
@@ -30,31 +68,20 @@ app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
 
 app.get('/auth', (request, response) => {
-  const formData = {
-    'grant_type': 'authorization_code',
-    'client_id': argv.clientId,
-    'client_secret': argv.clientSecret,
-    'redirect_uri': redirectUrl,
-    'code': request.query.code
-  };
-
-  http.post({
-    url: 'https://api.getmondo.co.uk/oauth2/token',
-    form: formData},
-    (err, _, body) => {
-      if (err) {
-        return console.error('upload failed:', err);
+  rp(authTokenRequest(request.query.code))
+    .then((body) => {
+      if (body.error) {
+        console.error(body);
       } else {
-        const jsonResponse = JSON.parse(body);
-        if (jsonResponse.error) {
-          console.error(jsonResponse);
-        } else {
-          console.log('Access token returned:', jsonResponse.access_token);
-          request.session.token = jsonResponse.access_token;
-          response.redirect('/');
-        }
+        console.log('Access token returned:', body.access_token);
+        request.session.token = body.access_token;
+        response.redirect('/');
       }
+    })
+    .error((error) => {
+      console.error(error);
     });
+
 });
 
 app.get('/', (request, response) => {
@@ -63,6 +90,12 @@ app.get('/', (request, response) => {
     response.redirect(loginUrl);
     return;
   }
+
+  rp(accountsRequest(accessToken))
+    .then((accountsResponse) => accountsResponse.accounts[0])
+    .then((account) => rp(balanceRequest(accessToken, account.id)))
+    .then((balanceResponse) => console.log(balanceResponse))
+    .error((error) => console.error(error));
 
   response.render('index');
 });
