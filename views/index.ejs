@@ -4,7 +4,16 @@
   <title>Mondo Expenses</title>
 </head>
 <body>
-  <h2>Hello Colin</h2>
-  <h3>Account Balance: <%= balance.balance %></h3> 
+  <h2>Hello <%= account.description %></h2>
+  <h3>Account Balance: <%= balance.balance %></h3>
+
+  <ul>
+    <%
+      for(var i = 0; i < transactions.transactions.length; i++) {
+        var transaction = transactions.transactions[i];
+    %>
+      <li><%= transaction.description %></li>
+    <% } %>
+  </ul>
 </body>
 </html>

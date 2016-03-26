@@ -106,12 +106,22 @@ app.get('/', (request, response) => {
   }
 
   rp(accountsRequest(accessToken))
-    .then(accountsResponse => accountsResponse.accounts[0])
-    .then(account => Q.all([
-      rp(balanceRequest(accessToken, account.id)),
-      rp(listTransactionsRequest(accessToken, account.id))
-    ]))
-    .then(combined => response.render('index', { balance: combined[0] }))
+    .then(accountsResponse => {
+      const account = accountsResponse.accounts[0];
+      return Q.all([
+        rp(balanceRequest(accessToken, account.id)),
+        rp(listTransactionsRequest(accessToken, account.id))
+      ])
+      .then(combined => {
+        const data = {
+          account: account,
+          balance: combined[0],
+          transactions: combined[1]
+        };
+        console.log(JSON.stringify(data, null, 2));
+        response.render('index', data);
+      });
+    })
     .error((error) => console.error(error));
 
 });
