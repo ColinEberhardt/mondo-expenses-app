@@ -36,7 +36,8 @@ function listTransactionsRequest(accessToken, accountId) {
       'Authorization': 'Bearer ' + accessToken
     },
     qs: {
-      'account_id': accountId
+      'account_id': accountId,
+      'expand[]': 'merchant'
     },
     json: true
   };
@@ -76,7 +77,7 @@ app.use(session({
 }));
 
 app.set('port', port);
-app.use(express.static(path.join(__dirname, '/public')));
+app.use(express.static(path.join(__dirname, '/node_modules')));
 
 app.set('views', path.join(__dirname, '/views'));
 app.set('view engine', 'ejs');
