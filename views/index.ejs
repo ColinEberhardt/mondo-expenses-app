@@ -42,30 +42,19 @@
   </div>
   <ul>
     <%
-      for(var i = 0; i < transactions.transactions.length; i++) {
-        var transaction = transactions.transactions[i];
+      for(var i = 0; i < transactions.length; i++) {
+        var transaction = transactions[i];
         var merchant = transaction.merchant;
     %>
       <li class='row'>
-        <% if (merchant) { %>
-          <div class='col-md-2'>
-            <img src='<%= merchant.logo %>'/>
-          </div>
-          <div class='col-md-7'>
-            <h3><%= merchant.name %></h3>
-            <p><%= transaction.notes %></p>
-          </div>
-          <h3 class='col-md-3 price'><%= amount(-transaction.local_amount) %></h3>
-        <% } else { %>
-          <div class='col-md-2'>
-            <img src='https://getmondo.co.uk/static/images/mondo-mark-01.png'/>
-          </div>
-          <div class='col-md-7'>
-            <h3>Mondo</h3>
-            <p><%= transaction.description %></p>
-          </div>
-          <h3 class='col-md-3 price'><%= amount(transaction.local_amount) %></h3>
-        <% } %>
+        <div class='col-md-2'>
+          <img src='<%= merchant.logo %>'/>
+        </div>
+        <div class='col-md-7'>
+          <h3><%= merchant.name %></h3>
+          <p><%= transaction.notes %></p>
+        </div>
+        <h3 class='col-md-3 price'><%= amount(-transaction.local_amount) %></h3>
       </li>
     <% } %>
   </ul>

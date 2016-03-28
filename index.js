@@ -113,13 +113,13 @@ app.get('/', (request, response) => {
         rp(balanceRequest(accessToken, account.id)),
         rp(listTransactionsRequest(accessToken, account.id))
       ])
-      .then(combined => {
+      .then(mondoData => {
         const data = {
           account: account,
-          balance: combined[0],
-          transactions: combined[1]
+          balance: mondoData[0],
+          transactions: mondoData[1].transactions.filter(t => t.merchant)
+            .filter(t => t.notes.indexOf('#expenses') !== -1)
         };
-        console.log(JSON.stringify(data, null, 2));
         response.render('index', data);
       });
     })
