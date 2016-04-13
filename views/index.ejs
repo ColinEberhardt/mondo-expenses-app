@@ -66,5 +66,27 @@
       </li>
     <% } %>
   </ul>
+  <script>
+  document.addEventListener('copy', function(e){
+    e.clipboardData.setData('text/plain', `<%=
+      transactions.map(t =>
+        [
+          t.merchant.name,
+          'Food',
+          t.created.substr(0, 10),
+          '',
+          '',
+          '',
+          '',
+          '',
+          'Y',
+          amount(-t.amount)
+        ].join('\t')
+      )
+      .join('\n')
+    %>`);
+    e.preventDefault();
+  });
+  </script>
 </body>
 </html>
