@@ -100,7 +100,7 @@ app.get('/auth', (request, response) => {
 });
 
 app.get('/', (request, response) => {
-  const accessToken = request.session.token;
+  const accessToken = argv.accessToken || request.session.token;
   if (!accessToken) {
     response.redirect(loginUrl);
     return;
