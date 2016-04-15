@@ -11,3 +11,9 @@ node index.js --clientId=oauthclient_0000 --clientSecret=00000000000
 ```
 
 Replace with your own id and secret!
+
+Alternatively you can specify a sandbox access token from the Mondo developer tools:
+
+```
+node index.js --accessToken=aBcDe123...
+```

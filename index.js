@@ -1,3 +1,5 @@
+'use strict';
+
 const port = 5000;
 const express = require('express');
 const Q = require('q');
@@ -68,6 +70,24 @@ function authTokenRequest(code) {
   };
 }
 
+const createFilterFromQuery = (query) =>
+  (tx) => {
+    for (let key of Object.keys(query)) {
+      const expected = query[key];
+      const actual = tx[key];
+      if (Array.isArray(actual)) {
+        if (actual.indexOf(expected) === -1) {
+          return false;
+        }
+      } else {
+        if (actual != expected) { // eslint-disable-line eqeqeq
+          return false;
+        }
+      }
+    }
+    return true;
+  };
+
 // configure the session
 app.use(session({
   store: new FileStore(),
@@ -90,7 +110,7 @@ app.get('/auth', (request, response) => {
       } else {
         console.log('Access token returned:', body.access_token);
         request.session.token = body.access_token;
-        response.redirect('/');
+        response.redirect('/?notes=#expenses');
       }
     })
     .error((error) => {
@@ -100,7 +120,7 @@ app.get('/auth', (request, response) => {
 });
 
 app.get('/', (request, response) => {
-  const accessToken = request.session.token;
+  const accessToken = argv.accessToken || request.session.token;
   if (!accessToken) {
     response.redirect(loginUrl);
     return;
@@ -114,11 +134,12 @@ app.get('/', (request, response) => {
         rp(listTransactionsRequest(accessToken, account.id))
       ])
       .then(mondoData => {
+        const transactions = mondoData[1].transactions.filter(tx => tx.merchant)
+          .filter(createFilterFromQuery(request.query));
         const data = {
           account: account,
           balance: mondoData[0],
-          transactions: mondoData[1].transactions.filter(t => t.merchant)
-            .filter(t => t.notes.indexOf('#expenses') !== -1)
+          transactions
         };
         response.render('index', data);
       });
