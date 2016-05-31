@@ -72,13 +72,21 @@ function authTokenRequest(code) {
 
 const createFilterFromQuery = (query) =>
   (tx) => {
-    for (let key of Object.keys(query)) {
+    const keys = Object.keys(query)
+      .filter(k => ['format'].indexOf(k) === -1);
+    for (const key of keys) {
       const expected = query[key];
       const actual = tx[key];
       if (Array.isArray(actual)) {
         if (actual.indexOf(expected) === -1) {
           return false;
         }
+      } else if (['created', 'settled'].indexOf(key) > -1) {
+        const min = new Date(expected.substr(0, 10));
+        const max = new Date(expected.substr(11, 10));
+        max.setDate(max.getDate() + 1);
+        const date = new Date(actual);
+        return min < date && date < max;
       } else {
         if (actual != expected) { // eslint-disable-line eqeqeq
           return false;
@@ -141,7 +149,14 @@ app.get('/', (request, response) => {
           balance: mondoData[0],
           transactions
         };
-        response.render('index', data);
+        switch (request.query.format) {
+        case 'json':
+          return response.send(data);
+        case 'expenses':
+          return response.render('expenses', data);
+        default:
+          return response.render('index', data);
+        }
       });
     })
     .error((error) => console.error(error));

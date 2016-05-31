@@ -53,6 +53,9 @@
         <div class='col-md-5'>
           <h3><%= merchant.name %></h3>
           <p><%= transaction.notes %></p>
+          <% if (transaction.attachments.length && transaction.attachments[0].type === 'image/jpeg') { %>
+            <p><img src="<%=transaction.attachments[0].url %>"/></p>
+          <% } %>
         </div>
         <h3 class='col-md-3 price'>
           <% if (transaction.local_currency !== transaction.currency) { %>
@@ -67,12 +70,21 @@
     <% } %>
   </ul>
   <script>
+  <%
+    const categoryMap = {
+      'holidays': 'Other',
+      'eating_out': 'Food',
+      'groceries': 'Food',
+      'entertainment': 'Drinks',
+      'transport': 'Transport'
+    };
+  %>
   document.addEventListener('copy', function(e){
     e.clipboardData.setData('text/plain', `<%=
       transactions.map(t =>
         [
           t.merchant.name,
-          'Food',
+          categoryMap[t.merchant.category],
           t.created.substr(0, 10),
           '',
           '',
