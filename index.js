@@ -81,6 +81,12 @@ const createFilterFromQuery = (query) =>
         if (actual.indexOf(expected) === -1) {
           return false;
         }
+      } else if (['created', 'settled'].indexOf(key) > -1) {
+        const min = new Date(expected.substr(0, 10));
+        const max = new Date(expected.substr(11, 10));
+        max.setDate(max.getDate() + 1);
+        const date = new Date(actual);
+        return min < date && date < max;
       } else {
         if (actual != expected) { // eslint-disable-line eqeqeq
           return false;
