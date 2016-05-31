@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Employee Scott Logic Claim for Reimbursement</title>
+  <style>
+    .team-list, .trip-description {
+      width: 250px;
+    }
+    :root {
+      counter-reset: ref;
+    }
+    .ref::after {
+      content: counter(ref);
+      counter-increment: ref;
+    }
+    .date, .category {
+      width: 80px;
+    }
+    .name, .notes {
+      width: 200px;
+    }
+    .client-name, .project-name {
+      width: 100px;
+    }
+    .account-code, .office-code, .receipt {
+      width: 50px;
+    }
+    .amount, .vat {
+      width: 50px;
+      text-align: right;
+    }
+    .receipt-image {
+      width: 500px;
+    }
+    .receipt-image>img {
+      height: 500px;
+      object-fit: contain;
+    }
+  </style>
+</head>
+<%
+  function amount(value) {
+    return '£' + (value / 100).toFixed(2);
+  }
+  function date(date) {
+    return date.toISOString().substr(0, 10);
+  }
+%>
+<body>
+  <h1>Employee Scott Logic Claim for Reimbursement</h1>
+  <table style="float: right">
+    <tr>
+      <td><i>Admin Use Only</i></td>
+    </tr>
+    <tr>
+      <td><b>PL Number:</b></td>
+      <td><input/></td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <td>Name:</td>
+      <td><input value="<%= account.description %>"/></td>
+    </tr>
+    <tr>
+      <td>Team List (If Applic):</td>
+      <td><input class="team-list"/></td>
+    </tr>
+    <tr>
+      <td>Trip/Activity Date Range:</td>
+      <td><input value="<%= date(new Date(transactions[0].created))%> - <%= date(new Date(transactions[transactions.length - 1].created))%>"/></td>
+    </tr>
+    <tr>
+      <td>Form Submission Date:</td>
+      <td><input value="<%= date(new Date()) %>"/></td>
+    </tr>
+    <tr>
+      <td>Brief Overall Description <br/> of Trip/Activity:</td>
+      <td><input class="trip-description"/></td>
+    </tr>
+  </table>
+  <table>
+    <tr>
+      <th>Ref</th>
+      <th>Receipt From <br/>(Name of Establishment)</th>
+      <th>Purchase</th>
+      <th>Date</th>
+      <th>Notes</th>
+      <th>Client Name <br/>(If Applicable)</th>
+      <th>Project Name <br/>(If Applicable)</th>
+      <th>Acc <br/>Code</th>
+      <th>Office <br/>Code</th>
+      <th>Receipt</th>
+      <th>Amount</th>
+      <th>VAT</th>
+    </tr>
+    <tr>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td></td>
+      <td><input class="apply-all client-name" data-class="client-name"/></td>
+      <td><input class="apply-all project-name" data-class="project-name"/></td>
+      <td><input class="apply-all account-code" data-class="account-code"/></td>
+      <td><input class="apply-all office-code" data-class="office-code"/></td>
+      <td></td>
+      <td></td>
+      <td></td>
+    </tr>
+    <%
+      for(var i = 0; i < transactions.length; i++) {
+        var transaction = transactions[i];
+        var merchant = transaction.merchant;
+        var categoryMap = {
+          'holidays': 'Other',
+          'eating_out': 'Food',
+          'groceries': 'Food',
+          'entertainment': 'Drinks',
+          'transport': 'Transport'
+        };
+    %>
+    <tr>
+      <td><span class="ref"/></td>
+      <td><input class="name" value="<%= merchant.name %>"/></td>
+      <td><input class="category" value="<%= categoryMap[merchant.category] %>"/></td>
+      <td><input class="date" value="<%= date(new Date(transaction.created)) %>"/></td>
+      <td><input class="notes" value="<%= transaction.notes %>"/></td>
+      <td><input class="client-name"/></td>
+      <td><input class="project-name"/></td>
+      <td><input class="account-code"/></td>
+      <td><input class="office-code"/></td>
+      <td><input class="receipt" type="checkbox"<%= transaction.attachments.length ? ' checked' : ''%>/></td>
+      <td><input class="amount" value="<%= amount(-transaction.amount) %>"/></td>
+      <td><input class="vat"/></td>
+    </tr>
+    <% } %>
+    <tr>
+      <td colspan="10">TOTAL</td>
+      <td><input id="total" class="amount" value="<%= amount(transactions.reduce((sum, tx)=>sum-tx.amount, 0)) %>"/></td>
+    </tr>
+  </table>
+  <p>I certify that these expenses were necessarily incurred</p>
+  <p>Signed: <input/> Date: <input value="<%= date(new Date()) %>"/></p>
+  <p><i>Admin Use Only</i></p>
+  <p>Auth Signature: <input/> Date: <input/></p>
+  <%
+    for(var i = 0; i < transactions.length; i++) {
+      var transaction = transactions[i];
+      if (transaction.attachments.length === 0) {
+        continue;
+      }
+  %>
+  <div class="receipt-image" data-id="<%= transaction.id %>">
+    <img src="<%= transaction.attachments[0].url %>"/>
+  </div>
+  <% } %>
+  <script>
+    for (const parent of Array.from(document.querySelectorAll('.apply-all'))) {
+      parent.addEventListener('keyup', () => {
+        for (const child of Array.from(document.querySelectorAll(`.${parent.dataset['class']}`))) {
+          child.value = parent.value;
+        }
+      })
+    }
+  </script>
+</body>
+</html>

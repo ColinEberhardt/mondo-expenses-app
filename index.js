@@ -152,6 +152,8 @@ app.get('/', (request, response) => {
         switch (request.query.format) {
         case 'json':
           return response.send(data);
+        case 'expenses':
+          return response.render('expenses', data);
         default:
           return response.render('index', data);
         }
